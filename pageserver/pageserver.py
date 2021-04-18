@@ -91,18 +91,18 @@ def respond(sock):
 
     parts = request.split()
     if len(parts) > 1 and parts[0] == "GET":
-        if parts[1].startswith("./pages/"):
-            if parts[1].endswith(".html") or parts[1].endswith(".css"):
-                path = parts[1].split("pages/")
-                if path[-1].startswith("~") or path[-1].startswith("..") or path[-1].startswith("//"):
+        if parts[1].endswith(".html") or parts[1].endswith(".css"):
+                path = parts[1].split(".")
+                if path[-2].startswith("~") or path[-2].startswith("..") or path[-2].startswith("//"):
                     transmit(STATUS_FORBIDDEN, sock)
                 else:
-                    with open(parts[1], "r", encoding="utf-8") as f:
-                        transmit(STATUS_OK, sock)
-                        transmit(f.read(), sock)
-        else:
-            transmit(STATUS_NOT_FOUND, sock)
-    else:
+                    try:
+                        with open(parts[1], "r", encoding="utf-8") as f:
+                            transmit(STATUS_OK, sock)
+                            transmit(f.read(), sock)
+                    except FileNotFoundError:
+                        transmit(STATUS_NOT_FOUND, sock)
+    else:        
         log.info("Unhandled request: {}".format(request))
         transmit(STATUS_NOT_IMPLEMENTED, sock)
         transmit("\nI don't handle this request: {}\n".format(request), sock)
