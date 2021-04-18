@@ -91,18 +91,24 @@ def respond(sock):
     options = get_options()
 
     parts = request.split()
-    if len(parts) > 1 and parts[0] == "GET":  # check valid request
-        if parts[1].endswith(".html") or parts[1].endswith(".css"):  # check valid file type
-            if ((parts[1].find("/~") != -1) or (parts[1].find("/..") != -1) or (parts[1].find("//") != -1)):  # check for forbidden requests
+    # check valid request
+    if len(parts) > 1 and parts[0] == "GET": 
+        # check valid file type
+        if parts[1].endswith(".html") or parts[1].endswith(".css"):
+            # check for forbidden requests
+            if ((parts[1].find("/~") != -1) or (parts[1].find("/..") != -1) or (parts[1].find("//") != -1)):
                 transmit(STATUS_FORBIDDEN, sock)
             else:
+                # if file is valid type and not forbidden
                 try:
                     with open("{}{}".format(options.DOCROOT, parts[1]), "r") as f:
+                        # transmit file content if the file exists in the DOCROOT dir
                         transmit(STATUS_OK, sock)
                         transmit(f.read(), sock)    
                 except FileNotFoundError: # file is not in pages/
                     transmit(STATUS_NOT_FOUND, sock)
         else:
+            # files that are not .html or .css are forbidden
             transmit(STATUS_FORBIDDEN, sock)
     else:        
         log.info("Unhandled request: {}".format(request))
