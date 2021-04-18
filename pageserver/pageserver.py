@@ -88,20 +88,22 @@ def respond(sock):
     request = str(request, encoding='utf-8', errors='strict')
     log.info("--- Received request ----")
     log.info("Request was {}\n***\n".format(request))
+    options = get_options()
 
     parts = request.split()
-    if len(parts) > 1 and parts[0] == "GET":
-        if parts[1].endswith(".html") or parts[1].endswith(".css"):
-                path = parts[1].split(".")
-                if path[-2].startswith("~") or path[-2].startswith("..") or path[-2].startswith("//"):
-                    transmit(STATUS_FORBIDDEN, sock)
-                else:
-                    try:
-                        with open(parts[1], "r", encoding="utf-8") as f:
-                            transmit(STATUS_OK, sock)
-                            transmit(f.read(), sock)
-                    except FileNotFoundError:
-                        transmit(STATUS_NOT_FOUND, sock)
+    if len(parts) > 1 and parts[0] == "GET":  # check valid request
+        if parts[1].endswith(".html") or parts[1].endswith(".css"):  # check valid file type
+            if ((parts[1].find("/~") != -1) or (parts[1].find("/..") != -1) or (parts[1].find("//") != -1)):  # check for forbidden requests
+                transmit(STATUS_FORBIDDEN, sock)
+            else:
+                try:
+                    with open("{}{}".format(options.DOCROOT, parts[1]), "r") as f:
+                        transmit(STATUS_OK, sock)
+                        transmit(f.read(), sock)    
+                except FileNotFoundError: # file is not in pages/
+                    transmit(STATUS_NOT_FOUND, sock)
+        else:
+            transmit(STATUS_FORBIDDEN, sock)
     else:        
         log.info("Unhandled request: {}".format(request))
         transmit(STATUS_NOT_IMPLEMENTED, sock)
